@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:mobile/screens/home/home.screen.dart';
+import 'package:shlus/ui/screens/chat_screen.dart';
+import 'package:shlus/ui/screens/main_screen.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting("ru_RU", null);
+
   runApp(const MyApp());
 }
 
@@ -20,7 +25,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue)
       ),
 
-      home: const HomeScreen()
+      home: const MainScreen()
     );
 
   }
