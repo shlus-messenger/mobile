@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:shlus/models/room.dart';
+import 'package:shlus/models/chat.dart';
 import 'package:intl/intl.dart';
 
 class ChatItem extends StatelessWidget {
   
-  final Room room;
+  final Chat chat;
   final VoidCallback? onTap;
 
   const ChatItem({
     super.key,
-    required this.room,
+    required this.chat,
     this.onTap
   });
 
@@ -20,7 +20,7 @@ class ChatItem extends StatelessWidget {
 
     if(diff.inDays == 0) {
 
-      return '${date.hour.toString}:${date.minute.toString()}';
+      return '${date.hour.toString()}:${date.minute.toString()}';
 
     }
 
@@ -42,58 +42,70 @@ class ChatItem extends StatelessWidget {
   Widget build(BuildContext context) {
     
     return InkWell(
-    onTap: onTap,
-    child: Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: Colors.grey.shade300),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(color: Colors.grey.shade300),
+          ),
+        ),
+        child: Row(
+          children: [
+            // ClipRRect(
+            //   borderRadius: BorderRadius.circular(25),
+            //   child: Image.network(
+            //     chat.logoUrl,
+            //     width: 50,
+            //     height: 50,
+            //     errorBuilder: (context, error, stackTrace) {
+            //       return const Icon(Icons.error);
+            //     },
+            //   ),
+            // ),
+            const SizedBox(width: 12),
+            
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    chat.name,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w500,
+                      fontSize: 20,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+
+                  if(chat.lastMessage != null)
+
+                    Text(
+                      chat.type == "group" ? "${chat.lastMessageUserName ?? ''}: ${chat.lastMessage ?? ''}" : chat.lastMessage ?? '',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+
+            if(chat.lastMessage != null)
+
+              Text(
+                _formatDate(chat.lastMessageAt!),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey.shade500,
+                ),
+              ),
+          ],
         ),
       ),
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(25),
-            child: Image.network(room.logoUrl, width: 50, height: 50),
-          ),
-          const SizedBox(width: 12),
-          
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  room.name,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w500,
-                    fontSize: 20,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  room.type == "group" ? "${room.lastMessageUserName}: ${room.lastMessage}" : room.lastMessage,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          
-          Text(
-            _formatDate(room.lastMessageAt),
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey.shade500,
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
+    );
 
   }
 

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shlus/ui/screens/profile_screen.dart';
 import 'package:shlus/ui/screens/settings_screen.dart';
-import 'chat_screen.dart';
+import 'chat_list_screen.dart';
 
 class MainScreen extends StatefulWidget {
 
@@ -16,13 +16,26 @@ class _MainScreenState extends State<MainScreen> {
 
   int _selectedIndex = 0;
 
-  final List<Widget> _screens = [
+  Widget _buildScreen() {
 
-    const ChatScreen(),
-    const SettingsScreen(),
-    const ProfileScreen()
+    switch(_selectedIndex) {
 
-  ];
+      case 0:
+        return const ChatListScreen();
+      
+      case 1:
+        return const SettingsScreen();
+
+      case 2:
+        return const ProfileScreen();
+
+      default:
+
+        return SizedBox.shrink();
+
+    }
+
+  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -34,7 +47,7 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
 
     return Scaffold(
-      body: _screens[_selectedIndex],
+      body: _buildScreen(),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
