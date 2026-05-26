@@ -1,4 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:shlus/ui/screens/new_group_screen.dart';
+import 'package:shlus/ui/widgets/input_component.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 class CommunicationScreen extends StatefulWidget {
 
@@ -11,7 +16,94 @@ class CommunicationScreen extends StatefulWidget {
 
 class _CommunicationScreenState extends State<CommunicationScreen> {
 
+	late StreamSubscription<List<ConnectivityResult>> _subscription;
+	String _appBarText = "Соединение...";
 
+	void _showBottomSheet(BuildContext context) {
+
+		showModalBottomSheet(
+			context: context,
+			shape: const RoundedRectangleBorder(
+				borderRadius: BorderRadius.vertical(top: Radius.circular(20))
+			),
+			builder: (BuildContext context) {
+				return Container(
+					padding: EdgeInsets.all(20),
+					child: Column(
+						mainAxisAlignment: MainAxisAlignment.start,
+						mainAxisSize: MainAxisSize.min,
+						crossAxisAlignment: CrossAxisAlignment.center,
+						children: [
+							Align(
+								alignment: Alignment.centerLeft,
+								child: const Text(
+									"Новый контакт",
+									textAlign: TextAlign.start,
+									style: TextStyle(
+										fontWeight: FontWeight.w500,
+										fontSize: 20
+									)
+								),
+							),
+							const SizedBox(height: 20),
+							InputComponent(
+								placeholder: "Имя (обязательно)",
+							),
+							const SizedBox(height: 20),
+							InputComponent(
+								placeholder: "Фамилия (необязательно)",
+							),
+							const SizedBox(height: 20),
+							InputComponent(
+								placeholder: "Номер телефона",
+							),
+							const SizedBox(height: 20),
+							InkWell(
+								onTap: () {
+									Navigator.pop(context);
+								},
+								child: Container(
+									alignment: Alignment.center,
+									padding: EdgeInsets.symmetric(vertical: 10),
+									decoration: BoxDecoration(
+										borderRadius: BorderRadius.circular(5),
+										color: Colors.blue,
+									),
+									child: Text(
+										"Создать контакт",
+										style: TextStyle(
+											color: Colors.white,
+											fontSize: 16,
+											fontWeight: FontWeight.w500
+										)
+									),
+								),
+							),
+							const SizedBox(height: 20),
+						],
+					)
+				);
+			}
+		);
+	}
+
+	@override
+	void initState() {
+
+		super.initState();
+
+
+		_subscription = Connectivity().onConnectivityChanged.listen((List<ConnectivityResult> result) {
+
+			print("Колбек вызван");
+
+			setState(() {
+				_appBarText = result.contains(ConnectivityResult.none) ? "Соединение..." : "Новое сообщение";
+			});
+
+		});
+
+	}
 
   @override
   Widget build(BuildContext context) {
@@ -19,15 +111,16 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          "Новое сообщение",
+          _appBarText,
           style: TextStyle(
             fontWeight: FontWeight.w500
           ),
         ),
       ),
       floatingActionButton: FloatingActionButton(
+				elevation: 0,
         child: Icon(Icons.add, color: Colors.white),
-        onPressed: () {},
+        onPressed: () => _showBottomSheet(context),
         shape: const CircleBorder(),
         backgroundColor: Colors.blue,
       ),
@@ -65,6 +158,14 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
               child: Column(
                 children: [
                   InkWell(
+										onTap: () {
+											Navigator.push(
+												context,
+												MaterialPageRoute(
+													builder: (context) => NewGroupScreen()
+												)
+											);
+										},
                     child: Row(
                       children: [
                         Icon(Icons.group),
@@ -91,22 +192,35 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
               ),
             ),
             const SizedBox(height: 20),
-            Expanded(
-              child: Container(
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                ),
-                child: ListView.builder(
-                  itemCount: 10,
-                  itemBuilder: (context, index) {
-                    return Text(
-                      "test",
-                      textAlign: TextAlign.center,
-                    );
-                  },
-                ),
-              )
+            Container(
+							padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+							decoration: BoxDecoration(
+									color: Colors.white,
+							),
+							child: Column(
+								crossAxisAlignment: CrossAxisAlignment.start,
+								children: [
+									Text(
+										"Сортировка по имени",
+										textAlign: TextAlign.start,
+										style: TextStyle(
+											color: Colors.blue,
+											fontWeight: FontWeight.w500
+										)
+									),
+									const SizedBox(height: 10),
+									ListView.builder(
+										shrinkWrap: true,
+										itemCount: 20,
+										itemBuilder: (context, index) {
+												return Text(
+														"test",
+														textAlign: TextAlign.center,
+												);
+										},
+									),
+								],
+							)
             )
           ],
         )

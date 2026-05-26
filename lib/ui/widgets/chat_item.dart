@@ -35,7 +35,6 @@ class ChatItem extends StatelessWidget {
       return DateFormat('d MMMM', 'ru').format(date);
 
     }
-
   }
 
   @override
@@ -52,17 +51,10 @@ class ChatItem extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // ClipRRect(
-            //   borderRadius: BorderRadius.circular(25),
-            //   child: Image.network(
-            //     chat.logoUrl,
-            //     width: 50,
-            //     height: 50,
-            //     errorBuilder: (context, error, stackTrace) {
-            //       return const Icon(Icons.error);
-            //     },
-            //   ),
-            // ),
+            CircleAvatar(
+              radius: 25,
+              backgroundImage: NetworkImage(chat.logoUrl),
+            ),
             const SizedBox(width: 12),
             
             Expanded(

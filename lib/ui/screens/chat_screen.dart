@@ -31,7 +31,7 @@ class _ChatScreenState extends State<ChatScreen> {
     super.initState();
 
     _service.onNewMessage = (payload) {
-
+      if(!mounted) return;
       setState(() {
 
         final newMessage = Message.fromJson(payload);
@@ -41,15 +41,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
     };
 
-    _service.initChannel(
-      widget.chat.id,
-      "a97f852a-0f86-462f-8814-f119d755cdb1",
-      "Mark"
-    );
-
     Future.delayed(Duration(milliseconds: 500), () {
 
-      _service.joinToChannel(
+      _service.joinToChat(
 
         widget.chat.id,
         "a97f852a-0f86-462f-8814-f119d755cdb1",
@@ -119,25 +113,42 @@ class _ChatScreenState extends State<ChatScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        shadowColor: Colors.grey,
-        elevation: 1,
-        title: Column(
+        title: Row(
           children: [
-            Text(
-              widget.chat.name,
-              textAlign: TextAlign.left,
-            ),
-            Text(
-              "был(а) недавно",
-              style: TextStyle(
-                fontSize: 12
+            CircleAvatar(
+              backgroundImage: NetworkImage(
+                widget.chat.logoUrl
               ),
-            )
+            ),
+            const SizedBox(width: 10),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.chat.name,
+                  textAlign: TextAlign.left,
+                ),
+                Text(
+                  "2 участника",
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey.shade500
+                  ),
+                )
+              ],
+            ),
           ],
-        )
+        ),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.more_vert),
+            onPressed: () {},
+          )
+        ],
       ),
-      body: SafeArea(
-        minimum: EdgeInsets.only(left: 20, top: 20),
+      body: Container(
+        color: Colors.grey.shade300,
+        padding: EdgeInsets.only(top: 20),
         child: Column(
           children: [
             Expanded(
@@ -146,28 +157,48 @@ class _ChatScreenState extends State<ChatScreen> {
                 : ListView.builder(
                     itemCount: _messages.length,
                     itemBuilder: (context, index) {
-                      return MessageItem(message: _messages[index]);
+                      return (
+                        Column(
+                          children: [
+                            MessageItem(message: _messages[index], isMe: _messages[index].userId == "a97f852a-0f86-462f-8814-f119d755cdb1"),
+                            const SizedBox(height: 20)
+                          ],
+                        )
+                      );
                     },
                   )
             ),
             Padding(
               padding: const EdgeInsets.all(8),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _textContoller,
-                      decoration: InputDecoration(
-                        hintText: "Сообщение: ",
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(25),
+                  color: Colors.white
+                ),
+                height: 40,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _textContoller,
+                        decoration: InputDecoration(
+                          hintText: "Сообщение: ",
+                          hintStyle: TextStyle(
+                            fontSize: 14
+                          ),
+                          border: OutlineInputBorder(
+                            borderSide: BorderSide.none
+                          )
+                        ),
+                        onSubmitted: _sendMessage,
                       ),
-                      onSubmitted: _sendMessage,
                     ),
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.send),
-                    onPressed: () => _sendMessage(_textContoller.text),
-                  )
-                ],
+                    IconButton(
+                      icon: Icon(Icons.send),
+                      onPressed: () => _sendMessage(_textContoller.text),
+                    )
+                  ],
+                )
               )
             )
           ],

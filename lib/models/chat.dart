@@ -1,10 +1,10 @@
 class Chat {
   final String id;
   final String name;
-  final String? lastMessage;
+  String? lastMessage;
   final String logoUrl;
-  final DateTime? lastMessageAt;
-  final String? lastMessageUserName;
+  DateTime? lastMessageAt;
+  String? lastMessageUserName;
   final String type;
 
   Chat({
@@ -19,11 +19,21 @@ class Chat {
 
   factory Chat.fromJson(Map<String, dynamic> json) {
 
+    String _getLogoUrl(String logoUrl) {
+
+      String result = logoUrl.replaceAll("http://s3:8333", "http://10.0.2.2:8333").replaceAll("http://localhost:8333", "http://10.0.2.2:8333");
+
+      print("Edited url: $result");
+
+      return result;
+
+    }
+
     return Chat(
       id: json["id"],
       name: json["name"],
       lastMessage: json["last_message"] ?? null,
-      logoUrl: "http://10.0.2.2:9000/chats/d5596c36-f013-4107-878f-5c65ba719808/logo/logo.png",
+      logoUrl: _getLogoUrl(json["logo_url"]),
       lastMessageAt: json["last_message_at"] != null
         ? DateTime.parse(json["last_message_at"])
         : null,

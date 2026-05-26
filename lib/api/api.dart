@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:shlus/models/message.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'dart:convert';
@@ -11,19 +13,27 @@ class PhoenixService {
   final String userId = "";
   final String userName = "";
 
-  WebSocketChannel? _channel;
+  static final PhoenixService _instance = PhoenixService._internal();
+  factory PhoenixService() => _instance;
+
+  PhoenixService._internal();
+
+  WebSocketChannel? _socket;
   Timer? _heartbeatTimer;
   bool _isJoined = false;
-  String? _joinRef;
+  String? _joinChatRef;
+  String? _joinUserRef;
   Function(Map<String, dynamic>)? onNewMessage;
+  Function(List<dynamic>)? onChatsList;
+  Function(Map<String, dynamic>)? onChatUpdated;
 
-  void initChannel(String chatId, String userId, String userName) {
+  void initSocket(String userId, String userName) {
 
     final wsUrl = Uri.parse("ws://10.0.2.2:4000/socket/websocket/?vsn=2.0.0&user_id=$userId&user_name=$userName");
 
-    _channel = WebSocketChannel.connect(wsUrl);
+    _socket = WebSocketChannel.connect(wsUrl);
 
-    _channel!.stream.listen(
+    _socket!.stream.listen(
 
       (message) {
 
@@ -43,18 +53,37 @@ class PhoenixService {
 
     );
 
+    Future.delayed(Duration(milliseconds: 500), () {
+
+      _joinToUserChannel(userId);
+
+    });
+
   }
 
-  void joinToChannel(String chatId, String userId, String userName) {
+  void _joinToUserChannel(String userId) {
 
-    print("Присоединяемся к каналу...");
+    print("Присоединяемся к каналу пользователя...");
 
     final ref = DateTime.now().millisecondsSinceEpoch.toString();
 
-    _joinRef = ref;
+    _joinUserRef = ref;
+
+    final joinMsg = [ref, ref, "user:$userId", "phx_join", {}];
+    _socket!.sink.add(jsonEncode(joinMsg));
+    
+  }
+
+  void joinToChat(String chatId, String userId, String userName) {
+
+    print("Присоединяемся к чату...");
+
+    final ref = DateTime.now().millisecondsSinceEpoch.toString();
+
+    _joinChatRef = ref;
 
     final joinMsg = [ref, ref, "room:$chatId", "phx_join", {}];
-    _channel!.sink.add(jsonEncode(joinMsg));
+    _socket!.sink.add(jsonEncode(joinMsg));
 
   }
 
@@ -64,7 +93,7 @@ class PhoenixService {
 
     final leaveMsg = [ref, ref, "room:$chatId", "phx_leave", {}];
 
-    _channel!.sink.add(jsonEncode(leaveMsg));
+    _socket!.sink.add(jsonEncode(leaveMsg));
 
   }
 
@@ -82,12 +111,12 @@ class PhoenixService {
 
     final ref = DateTime.now().millisecondsSinceEpoch.toString();
 
-    final msg = [_joinRef, ref, "room:$chatId", "new_message", {"body": body}];
+    final msg = [_joinChatRef, ref, "room:$chatId", "new_message", {"body": body}];
 
     print("Полный массив: $msg");
     print("JSON: $msg");
 
-    _channel!.sink.add(jsonEncode(msg));
+    _socket!.sink.add(jsonEncode(msg));
     print("Отправили сообщение");
     
   }
@@ -115,6 +144,22 @@ class PhoenixService {
 
       }
 
+      else if(event == "rooms_list") {
+
+        print("Получен список комнат");
+
+        onChatsList?.call(payload["rooms"]);
+
+      }
+
+      else if(event == "chat_updated") {
+
+        print("Чат был обновлён");
+
+        onChatUpdated?.call(payload);
+
+      }
+
     }
 
     catch(e) {
@@ -129,16 +174,38 @@ class PhoenixService {
 
     _heartbeatTimer?.cancel();
     _heartbeatTimer = Timer.periodic(Duration(seconds: 30), (timer) {
-      if(_channel != null && _isJoined) {
+      if(_socket != null && _isJoined) {
 
         final ref = DateTime.now().millisecondsSinceEpoch.toString();
 
         final heartbeatMsg = [null, ref, "phoenix", "heartbeat", {}];
 
-        _channel!.sink.add(jsonEncode(heartbeatMsg));
+        _socket!.sink.add(jsonEncode(heartbeatMsg));
 
       }
     });
+
+  }
+
+  Future<bool> createGroup(String groupName, File? logo, {bool isPublic = true}) async {
+
+    var request = http.MultipartRequest("POST", Uri.parse("http://10.0.2.2:4000/api/rooms"));
+
+    request.fields["name"] = groupName;
+    request.fields["description"] = "";
+    request.fields["user_id"] = "a97f852a-0f86-462f-8814-f119d755cdb1";
+    request.fields["type"] = "group";
+    request.fields["accessability"] = isPublic ? "public" : "private";
+
+    if(logo != null) {
+      request.files.add(
+        await http.MultipartFile.fromPath("logo", logo.path)
+      );
+    }
+
+    var response = await request.send();
+
+    return response.statusCode == 200;
 
   }
 

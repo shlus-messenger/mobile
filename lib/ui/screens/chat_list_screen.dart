@@ -5,6 +5,7 @@ import 'package:shlus/models/chat.dart';
 import 'package:shlus/ui/screens/chat_screen.dart';
 import 'package:shlus/ui/screens/communication_screen.dart';
 import 'package:shlus/ui/widgets/chat_item.dart';
+import 'package:shlus/models/message.dart';
 
 class ChatListScreen extends StatefulWidget {
 
@@ -20,30 +21,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
   List<Chat> _chats = [];
   final PhoenixService _service = PhoenixService();
   bool _isLoading = true;
-  String helloMessage = "Hi)";
-
-  Future<void> _loadRooms() async {
-
-    try{
-      
-      final chats = await _service.getChats("f47ac10b-58cc-4372-a567-0e02b2c3d479");
-
-      setState(() {
-        _chats = chats;
-        _isLoading = false;
-      });
-
-    }
-
-    catch(e){
-      setState(() {
-        _isLoading = false;
-      });
-
-      throw e;
-    }
-
-  }
+  String helloMessage = "Здесь пока что пусто...";
 
   void onTap(Chat chat) async {
 
@@ -58,8 +36,45 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
   @override
   void initState() {
+
     super.initState();
-    _loadRooms();
+    _service.onChatsList = (payload) {
+
+      if(!mounted) return;
+
+      setState(() {
+
+        _chats = payload.map<Chat>((chat) => Chat.fromJson(chat)).toList();
+        _isLoading = false;
+
+      });
+
+    };
+    _service.onChatUpdated = (payload) {
+
+      if(!mounted) return;
+
+      setState(() {
+
+        int targetChatIndex = _chats.indexWhere((chat) => chat.id == payload["room_id"]);
+
+        if(targetChatIndex != -1) {
+
+          final chat = _chats[targetChatIndex];
+
+          chat.lastMessage = payload["last_message"];
+          chat.lastMessageAt = DateTime.parse(payload["last_message_at"]);
+          chat.lastMessageUserName = payload["last_message_user_name"];
+
+          _chats.removeAt(targetChatIndex);
+          _chats.insert(0, chat);
+
+        }
+
+      });
+
+    };
+    _service.initSocket("a97f852a-0f86-462f-8814-f119d755cdb1", "Mark");
   }
 
   @override
