@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:shlus/models/message.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'dart:convert';
@@ -9,9 +8,9 @@ import 'package:shlus/models/chat.dart';
 
 class PhoenixService {
 
-  final String chatId = "";
-  final String userId = "";
-  final String userName = "";
+  String? _chatId;
+  final String _userId = "a97f852a-0f86-462f-8814-f119d755cdb1"; // Это константы из async storage
+  final String _userName = "Mark"; // Это константы из async storage
 
   static final PhoenixService _instance = PhoenixService._internal();
   factory PhoenixService() => _instance;
@@ -20,88 +19,136 @@ class PhoenixService {
 
   WebSocketChannel? _socket;
   Timer? _heartbeatTimer;
-  bool _isJoined = false;
-  String? _joinChatRef;
-  String? _joinUserRef;
+  bool _isJoinedToUserChannel = false;
+  bool _isJoinedToChatChannel = false;
+  String? _joinRef;
+  int _retryAttempts = 0;
+  List<int> _retryIntervals = [1, 2, 4, 8, 15, 30];
+  Timer? _retryTimer;
   Function(Map<String, dynamic>)? onNewMessage;
   Function(List<dynamic>)? onChatsList;
   Function(Map<String, dynamic>)? onChatUpdated;
+  Function(Map<String, dynamic>)? onPresenceState;
+  Function(Map<String, dynamic>)? onPresenceDiff;
+  Function(Map<String, dynamic>)? onTyping;
 
-  void initSocket(String userId, String userName) {
+  Future<void> initSocket() async {
 
-    final wsUrl = Uri.parse("ws://10.0.2.2:4000/socket/websocket/?vsn=2.0.0&user_id=$userId&user_name=$userName");
+    try {
+        final wsUrl = Uri.parse("ws://10.0.2.2:4000/socket/websocket/?vsn=2.0.0&user_id=$_userId&user_name=$_userName");
 
-    _socket = WebSocketChannel.connect(wsUrl);
+        final socket = WebSocketChannel.connect(wsUrl);
 
-    _socket!.stream.listen(
+        await socket.ready;
 
-      (message) {
+        _socket = socket;
 
-        print("Message: $message");
-        _handleMessage(message);
+        _socket!.stream.listen(
 
-      },
+            (message) {
 
-      onError: (error) {
-        _isJoined = false;
-        throw Exception(error);
-      },
+                print("Message: $message");
+                _handleMessage(message);
 
-      onDone: () {
-        _isJoined = false;
-      }
+            },
 
-    );
+            onError: (error) {
+                _isJoinedToChatChannel = false;
+                _retryInitSocket();
+                print(error);
+            },
 
-    Future.delayed(Duration(milliseconds: 500), () {
+            onDone: () {
+                _isJoinedToChatChannel = false;
+                _isJoinedToUserChannel = false;
 
-      _joinToUserChannel(userId);
+                _retryInitSocket();
+            }
 
-    });
+        );
+        
+        _retryAttempts = 0;
+        _joinToUserChannel();
+        _retryTimer?.cancel();
+    }
+
+    catch(e){
+
+        _isJoinedToChatChannel = false;
+        _isJoinedToUserChannel = false;
+
+        _retryInitSocket();
+
+        print(e);
+    }
 
   }
 
-  void _joinToUserChannel(String userId) {
+  void _retryInitSocket() {
+
+    print("Retry...");
+
+    if(_retryTimer?.isActive ?? false) return;
+
+    _socket?.sink.close();
+    _heartbeatTimer?.cancel();
+
+    _retryTimer = Timer(
+        Duration(seconds: _retryIntervals[_retryAttempts]),
+        () {
+            initSocket();
+        }
+    );
+
+    if(_retryAttempts < _retryIntervals.length - 1) _retryAttempts++;
+    
+  }
+
+  void _joinToUserChannel() {
 
     print("Присоединяемся к каналу пользователя...");
 
     final ref = DateTime.now().millisecondsSinceEpoch.toString();
 
-    _joinUserRef = ref;
-
-    final joinMsg = [ref, ref, "user:$userId", "phx_join", {}];
+    final joinMsg = [ref, ref, "user:$_userId", "phx_join", {}];
     _socket!.sink.add(jsonEncode(joinMsg));
     
   }
 
-  void joinToChat(String chatId, String userId, String userName) {
+  void joinToChat(String chatId) {
 
     print("Присоединяемся к чату...");
 
     final ref = DateTime.now().millisecondsSinceEpoch.toString();
 
-    _joinChatRef = ref;
+    _joinRef = ref;
 
     final joinMsg = [ref, ref, "room:$chatId", "phx_join", {}];
     _socket!.sink.add(jsonEncode(joinMsg));
 
   }
 
-  void leaveChannel(String chatId, String userId, String userName) {
+  void leaveChat(String chatId) {
 
     final ref = DateTime.now().millisecondsSinceEpoch.toString();
 
-    final leaveMsg = [ref, ref, "room:$chatId", "phx_leave", {}];
+    print("Выходим из чата...");
+
+    final leaveMsg = [_joinRef, ref, "room:$chatId", "phx_leave", {}];
 
     _socket!.sink.add(jsonEncode(leaveMsg));
 
+    _joinRef = null;
+    _isJoinedToChatChannel = false;
+    _chatId = null;
+
   }
 
-  void sendMessage(String chatId, String userId, String userName, String body) {
+  void sendMessage(String body) {
 
-    if(!_isJoined) {
+    if(!_isJoinedToChatChannel) {
 
-      print("_isJoined = false");
+     print("You're not in chat");
 
       return;
 
@@ -111,7 +158,7 @@ class PhoenixService {
 
     final ref = DateTime.now().millisecondsSinceEpoch.toString();
 
-    final msg = [_joinChatRef, ref, "room:$chatId", "new_message", {"body": body}];
+    final msg = [_joinRef, ref, "room:$_chatId", "new_message", {"body": body}];
 
     print("Полный массив: $msg");
     print("JSON: $msg");
@@ -128,12 +175,22 @@ class PhoenixService {
     try {
 
       final data = jsonDecode(message);
+      String topic = data[2];
       final event = data[3];
       final payload = data[4];
 
       if(event == "phx_reply" && payload["status"] == "ok") {
 
-        _isJoined = true;
+        if(topic.startsWith("user:"))
+            _isJoinedToUserChannel = true;
+        
+        else if(topic.startsWith("room:")) {
+
+            _isJoinedToChatChannel = true;
+            _chatId = topic.split("room:")[1];
+
+        }
+
         _startHeartbeat();
 
       }
@@ -152,6 +209,30 @@ class PhoenixService {
 
       }
 
+      else if(event == "presence_state") {
+
+        print("Получено состояние");
+
+        onPresenceState?.call(payload);
+
+      }
+
+      else if(event == "presence_diff") {
+
+        print("Получено состояние: $payload");
+
+        onPresenceDiff?.call(payload);
+
+      }
+
+      else if(event == "typing") {
+
+        print("Кто то что то печатает...");
+
+        onTyping?.call(payload);
+
+      }
+
       else if(event == "chat_updated") {
 
         print("Чат был обновлён");
@@ -164,9 +245,36 @@ class PhoenixService {
 
     catch(e) {
 
-      throw Exception(e);
+      print(e);
       
     }
+
+  }
+
+  void sendTyping(bool typing) {
+
+    if(!_isJoinedToChatChannel) {
+
+        print("You're not in chat");
+        return;
+
+    }
+
+    final ref = DateTime.now().millisecondsSinceEpoch.toString();
+
+    final msg = [
+        
+        _joinRef,
+        ref,
+        "room:$_chatId",
+        "typing",
+        {
+            _userName: typing,
+        }
+
+    ];
+
+    _socket!.sink.add(jsonEncode(msg));
 
   }
 
@@ -174,7 +282,7 @@ class PhoenixService {
 
     _heartbeatTimer?.cancel();
     _heartbeatTimer = Timer.periodic(Duration(seconds: 30), (timer) {
-      if(_socket != null && _isJoined) {
+      if(_socket != null) {
 
         final ref = DateTime.now().millisecondsSinceEpoch.toString();
 
@@ -193,7 +301,7 @@ class PhoenixService {
 
     request.fields["name"] = groupName;
     request.fields["description"] = "";
-    request.fields["user_id"] = "a97f852a-0f86-462f-8814-f119d755cdb1";
+    request.fields["user_id"] = _userId;
     request.fields["type"] = "group";
     request.fields["accessability"] = isPublic ? "public" : "private";
 
@@ -209,10 +317,10 @@ class PhoenixService {
 
   }
 
-  Future<List<Message>> getMessages(String chatId, String userId) async {
+  Future<List<Message>> getMessages(String chatId) async {
 
     final response = await http.get(
-      Uri.parse("http://10.0.2.2:4000/api/messages/$userId/$chatId")
+      Uri.parse("http://10.0.2.2:4000/api/messages/$_userId/$chatId")
     );
 
     if(response.statusCode == 200) {
@@ -229,7 +337,7 @@ class PhoenixService {
   
   }
 
-  Future<List<Chat>> getChats(String userId) async {
+  Future<List<Chat>> getChats() async {
 
     final response = await http.get(
       Uri.parse("http://10.0.2.2:4000/api/rooms"),

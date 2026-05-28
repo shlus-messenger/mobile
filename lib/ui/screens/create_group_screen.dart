@@ -6,16 +6,16 @@ import 'package:shlus/api/api.dart';
 import 'package:shlus/ui/screens/chat_list_screen.dart';
 import 'package:shlus/ui/screens/chat_screen.dart';
 
-class NewGroupScreen  extends StatefulWidget {
+class CreateGroupScreen  extends StatefulWidget {
 
-  const NewGroupScreen({super.key});
+  const CreateGroupScreen({super.key});
 
   @override
-  State<NewGroupScreen> createState() => _NewGroupScreenState();
+  State<CreateGroupScreen> createState() => _CreateGroupScreenState();
 
 }
 
-class _NewGroupScreenState extends State<NewGroupScreen> {
+class _CreateGroupScreenState extends State<CreateGroupScreen> {
 
   File? _selectedImage;
   PhoenixService _service = PhoenixService();
@@ -44,12 +44,7 @@ class _NewGroupScreenState extends State<NewGroupScreen> {
           bool result = await _service.createGroup(_groupNameController.text, _selectedImage);
 
           if(result) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => ChatListScreen()
-              )
-            );
+            Navigator.pop(context, true);
           } 
         },
         child: Icon(Icons.check, color: Colors.white),

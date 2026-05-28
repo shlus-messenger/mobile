@@ -2,10 +2,11 @@ class Chat {
   final String id;
   final String name;
   String? lastMessage;
-  final String logoUrl;
+  final String? logoUrl;
   DateTime? lastMessageAt;
   String? lastMessageUserName;
   final String type;
+  final List<dynamic> members;
 
   Chat({
     required this.id,
@@ -14,7 +15,8 @@ class Chat {
     required this.logoUrl,
     this.lastMessageAt,
     this.lastMessageUserName,
-    required this.type
+    required this.type,
+    required this.members
   });
 
   factory Chat.fromJson(Map<String, dynamic> json) {
@@ -33,12 +35,13 @@ class Chat {
       id: json["id"],
       name: json["name"],
       lastMessage: json["last_message"] ?? null,
-      logoUrl: _getLogoUrl(json["logo_url"]),
+      logoUrl: json["logo_url"] != null ? _getLogoUrl(json["logo_url"]) : null,
       lastMessageAt: json["last_message_at"] != null
         ? DateTime.parse(json["last_message_at"])
         : null,
       lastMessageUserName: json["last_message_user_name"] ?? null,
-      type: json["type"]
+      type: json["type"],
+      members: json["members"] ?? []
     );
 
   }

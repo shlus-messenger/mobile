@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:shlus/ui/screens/new_group_screen.dart';
+import 'package:shlus/ui/screens/create_group_screen.dart';
 import 'package:shlus/ui/widgets/input_component.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
@@ -158,13 +158,18 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
               child: Column(
                 children: [
                   InkWell(
-										onTap: () {
-											Navigator.push(
+										onTap: () async {
+											final created = await Navigator.push(
 												context,
 												MaterialPageRoute(
-													builder: (context) => NewGroupScreen()
+													builder: (context) => CreateGroupScreen()
 												)
 											);
+
+                      if(created == true && mounted) {
+                        Navigator.pop(context);
+                      }
+
 										},
                     child: Row(
                       children: [
@@ -183,7 +188,7 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
                         Icon(Icons.speaker),
                         const SizedBox(width: 10),
                         Text(
-                          "Создать группу"
+                          "Создать канал"
                         )
                       ],
                     )

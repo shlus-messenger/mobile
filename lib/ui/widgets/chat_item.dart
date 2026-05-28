@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shlus/models/chat.dart';
 import 'package:intl/intl.dart';
+import 'dart:math';
 
 class ChatItem extends StatelessWidget {
   
@@ -51,10 +52,26 @@ class ChatItem extends StatelessWidget {
         ),
         child: Row(
           children: [
-            CircleAvatar(
-              radius: 25,
-              backgroundImage: NetworkImage(chat.logoUrl),
-            ),
+            if(chat.logoUrl != null) ...[
+              CircleAvatar(
+                backgroundImage: NetworkImage(
+                  chat.logoUrl!
+                ),
+              ),
+            ]
+            
+            else ...[
+              CircleAvatar(
+                backgroundColor: Color.fromARGB(255, Random().nextInt(256), Random().nextInt(256), Random().nextInt(256)),
+                child: Text(
+                  chat.name[0],
+                  style: TextStyle(
+                    fontSize: 24,
+                    color: Colors.white
+                  )
+                ),
+              ),
+            ],
             const SizedBox(width: 12),
             
             Expanded(

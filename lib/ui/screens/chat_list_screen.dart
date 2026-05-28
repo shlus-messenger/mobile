@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shlus/api/api.dart';
 import 'package:shlus/models/chat.dart';
 import 'package:shlus/ui/screens/chat_screen.dart';
 import 'package:shlus/ui/screens/communication_screen.dart';
 import 'package:shlus/ui/widgets/chat_item.dart';
-import 'package:shlus/models/message.dart';
 
 class ChatListScreen extends StatefulWidget {
 
@@ -71,10 +69,20 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
         }
 
-      });
+        else {
+            _chats.insert(0, Chat.fromJson(payload));
+        }
 
+      });
     };
-    _service.initSocket("a97f852a-0f86-462f-8814-f119d755cdb1", "Mark");
+
+    _connectToBackend();
+  }
+
+  Future<void> _connectToBackend() async {
+
+    await _service.initSocket();
+
   }
 
   @override
@@ -83,7 +91,10 @@ class _ChatListScreenState extends State<ChatListScreen> {
     return Scaffold(
 
       floatingActionButton: FloatingActionButton(
-        child: const Icon(Icons.add),
+        elevation: 0,
+        shape: const CircleBorder(),
+        child: const Icon(Icons.add, color: Colors.white),
+        backgroundColor: Colors.blue,
         onPressed: () async {
 
           Navigator.push(
