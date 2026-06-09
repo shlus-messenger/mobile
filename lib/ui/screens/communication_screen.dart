@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:shlus/ui/screens/create_channel_screen.dart';
 import 'package:shlus/ui/screens/create_group_screen.dart';
 import 'package:shlus/ui/widgets/input_component.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -16,8 +17,8 @@ class CommunicationScreen extends StatefulWidget {
 
 class _CommunicationScreenState extends State<CommunicationScreen> {
 
-	late StreamSubscription<List<ConnectivityResult>> _subscription;
 	String _appBarText = "Соединение...";
+  StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
 
 	void _showBottomSheet(BuildContext context) {
 
@@ -93,9 +94,9 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
 		super.initState();
 
 
-		_subscription = Connectivity().onConnectivityChanged.listen((List<ConnectivityResult> result) {
+		_connectivitySubscription = Connectivity().onConnectivityChanged.listen((List<ConnectivityResult> result) {
 
-			print("Колбек вызван");
+      if(!mounted) return;
 
 			setState(() {
 				_appBarText = result.contains(ConnectivityResult.none) ? "Соединение..." : "Новое сообщение";
@@ -104,6 +105,14 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
 		});
 
 	}
+
+  @override
+  void dispose() {
+
+    _connectivitySubscription?.cancel();
+    super.dispose();
+
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -118,11 +127,11 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-				elevation: 0,
-        child: Icon(Icons.add, color: Colors.white),
+		elevation: 0,
         onPressed: () => _showBottomSheet(context),
         shape: const CircleBorder(),
         backgroundColor: Colors.blue,
+        child: Icon(Icons.add, color: Colors.white),
       ),
       body: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -158,17 +167,17 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
               child: Column(
                 children: [
                   InkWell(
-										onTap: () async {
+                    onTap: () async {
 											final created = await Navigator.push(
-												context,
-												MaterialPageRoute(
-													builder: (context) => CreateGroupScreen()
-												)
+													context,
+													MaterialPageRoute(
+														builder: (context) => CreateGroupScreen()
+													)
 											);
 
-                      if(created == true && mounted) {
-                        Navigator.pop(context);
-                      }
+											if(created == true && mounted) {
+													Navigator.pop(context);
+											}
 
 										},
                     child: Row(
@@ -183,6 +192,19 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
                   ),
                   const SizedBox(height: 10),
                   InkWell(
+										onTap: () async {
+											final created = await Navigator.push(
+													context,
+													MaterialPageRoute(
+														builder: (context) => CreateChannelScreen()
+													)
+											);
+
+											if(created == true && mounted) {
+													Navigator.pop(context);
+											}
+
+										},
                     child: Row(
                       children: [
                         Icon(Icons.speaker),
@@ -219,6 +241,7 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
 										itemCount: 20,
 										itemBuilder: (context, index) {
 												return Text(
+                            key: ValueKey(index),
 														"test",
 														textAlign: TextAlign.center,
 												);

@@ -1,30 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:shlus/ui/screens/entry_screen.dart';
 import 'package:shlus/ui/screens/profile_screen.dart';
 import 'package:shlus/ui/screens/settings_screen.dart';
 import 'chat_list_screen.dart';
 
-class MainScreen extends StatefulWidget {
+class HomeScreen extends StatefulWidget {
 
-  const MainScreen({super.key});
+  const HomeScreen({super.key});
 
   @override
-  State<MainScreen> createState() => _MainScreenState();
+  State<HomeScreen> createState() => _HomeScreenState();
 
 }
 
-class _MainScreenState extends State<MainScreen> {
+class _HomeScreenState extends State<HomeScreen> {
 
   int _selectedIndex = 0;
 
   Widget _buildScreen() {
 
     switch(_selectedIndex) {
-
+      
       case 0:
         return const ChatListScreen();
-      
+
       case 1:
-        return const SettingsScreen();
+        return const SettingsScreen();        
 
       case 2:
         return const ProfileScreen();

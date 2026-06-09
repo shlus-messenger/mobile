@@ -1,17 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:shlus/models/chat.dart';
 import 'package:intl/intl.dart';
-import 'dart:math';
+
+import 'package:shlus/ui/widgets/logo.dart';
 
 class ChatItem extends StatelessWidget {
   
   final Chat chat;
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
+  final bool isSelected;
 
   const ChatItem({
     super.key,
     required this.chat,
-    this.onTap
+    this.onTap,
+    this.onLongPress,
+    this.isSelected = false
   });
 
   String _formatDate(DateTime date) {
@@ -42,6 +47,7 @@ class ChatItem extends StatelessWidget {
   Widget build(BuildContext context) {
     
     return InkWell(
+      onLongPress: onLongPress,
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -52,26 +58,30 @@ class ChatItem extends StatelessWidget {
         ),
         child: Row(
           children: [
-            if(chat.logoUrl != null) ...[
-              CircleAvatar(
-                backgroundImage: NetworkImage(
-                  chat.logoUrl!
+            Stack(
+              children: [
+                Logo(
+                  logo: chat.logo,
+                  name: chat.name
                 ),
-              ),
-            ]
-            
-            else ...[
-              CircleAvatar(
-                backgroundColor: Color.fromARGB(255, Random().nextInt(256), Random().nextInt(256), Random().nextInt(256)),
-                child: Text(
-                  chat.name[0],
-                  style: TextStyle(
-                    fontSize: 24,
-                    color: Colors.white
+                if(isSelected) ...[
+                  Positioned(
+                    right: 0,
+                    bottom: 0,
+                    child: Container(
+                      alignment: Alignment.center,
+                      width: 20,
+                      height: 20,
+                      decoration: BoxDecoration(
+                        color: Colors.green,
+                        borderRadius: BorderRadius.circular(50)
+                      ),
+                      child: Icon(Icons.check, color: Colors.white, size: 20),
+                    ),
                   )
-                ),
-              ),
-            ],
+                ]
+              ],
+            ),
             const SizedBox(width: 12),
             
             Expanded(

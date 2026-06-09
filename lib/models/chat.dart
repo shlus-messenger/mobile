@@ -1,8 +1,10 @@
+import 'package:shlus/utils/convertUrl.dart';
+
 class Chat {
   final String id;
   final String name;
   String? lastMessage;
-  final String? logoUrl;
+  final String logo;
   DateTime? lastMessageAt;
   String? lastMessageUserName;
   final String type;
@@ -12,7 +14,7 @@ class Chat {
     required this.id,
     required this.name,
     this.lastMessage,
-    required this.logoUrl,
+    required this.logo,
     this.lastMessageAt,
     this.lastMessageUserName,
     required this.type,
@@ -21,25 +23,16 @@ class Chat {
 
   factory Chat.fromJson(Map<String, dynamic> json) {
 
-    String _getLogoUrl(String logoUrl) {
-
-      String result = logoUrl.replaceAll("http://s3:8333", "http://10.0.2.2:8333").replaceAll("http://localhost:8333", "http://10.0.2.2:8333");
-
-      print("Edited url: $result");
-
-      return result;
-
-    }
 
     return Chat(
       id: json["id"],
       name: json["name"],
-      lastMessage: json["last_message"] ?? null,
-      logoUrl: json["logo_url"] != null ? _getLogoUrl(json["logo_url"]) : null,
+      lastMessage: json["last_message"],
+      logo: convertUrl(json["logo"]),
       lastMessageAt: json["last_message_at"] != null
         ? DateTime.parse(json["last_message_at"])
         : null,
-      lastMessageUserName: json["last_message_user_name"] ?? null,
+      lastMessageUserName: json["last_message_user_name"],
       type: json["type"],
       members: json["members"] ?? []
     );

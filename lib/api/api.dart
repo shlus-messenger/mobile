@@ -1,16 +1,22 @@
 import 'dart:io';
+import 'dart:math';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:shlus/models/message.dart';
+import 'package:shlus/models/reaction.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'dart:convert';
 import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'package:shlus/models/chat.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/foundation.dart';
 
 class PhoenixService {
 
   String? _chatId;
-  final String _userId = "a97f852a-0f86-462f-8814-f119d755cdb1"; // Это константы из async storage
-  final String _userName = "Mark"; // Это константы из async storage
+  late String _userId;
+  late String _userName;
+  late String _token;
 
   static final PhoenixService _instance = PhoenixService._internal();
   factory PhoenixService() => _instance;
@@ -25,19 +31,42 @@ class PhoenixService {
   int _retryAttempts = 0;
   List<int> _retryIntervals = [1, 2, 4, 8, 15, 30];
   Timer? _retryTimer;
+	late String apiUrl;
   Function(Map<String, dynamic>)? onNewMessage;
   Function(List<dynamic>)? onChatsList;
-  Function(Map<String, dynamic>)? onChatUpdated;
+  Function(Map<String, dynamic>)? onAddInNewChat;
   Function(Map<String, dynamic>)? onPresenceState;
   Function(Map<String, dynamic>)? onPresenceDiff;
+  Function(Map<String, dynamic>)? onLastMessageUpdated;
+  Function(Map<String, dynamic>)? onUserDeleteChat;
+  Function(Reaction)? onAddReaction;
+  Function(Map<String, dynamic>)? onDeleteReaction;
   Function(Map<String, dynamic>)? onTyping;
+
+  Future<void> initData() async {
+
+    final pref = await SharedPreferences.getInstance();
+
+    _userId = pref.getString("userId") ?? "";
+    _userName = pref.getString("userName") ?? "";
+    _token =pref.getString("token") ?? "";
+
+		if(kDebugMode) {
+			apiUrl = dotenv.get("DEV_API_URL");
+		}
+		else if(kReleaseMode) {
+			apiUrl = dotenv.get("RELEASE_API_URL");
+		}
+
+  }
 
   Future<void> initSocket() async {
 
     try {
-        final wsUrl = Uri.parse("ws://10.0.2.2:4000/socket/websocket/?vsn=2.0.0&user_id=$_userId&user_name=$_userName");
+        final wsUrl = Uri.parse("ws://$apiUrl/socket/websocket/?vsn=2.0.0&user_id=$_userId&user_name=$_userName&token=$_token");
 
         final socket = WebSocketChannel.connect(wsUrl);
+
 
         await socket.ready;
 
@@ -46,23 +75,19 @@ class PhoenixService {
         _socket!.stream.listen(
 
             (message) {
-
-                print("Message: $message");
                 _handleMessage(message);
-
             },
 
-            onError: (error) {
+            onError: (error) async {
                 _isJoinedToChatChannel = false;
-                _retryInitSocket();
-                print(error);
+                await _retryInitSocket();
             },
 
-            onDone: () {
+            onDone: () async {
                 _isJoinedToChatChannel = false;
                 _isJoinedToUserChannel = false;
 
-                _retryInitSocket();
+                await _retryInitSocket();
             }
 
         );
@@ -84,13 +109,11 @@ class PhoenixService {
 
   }
 
-  void _retryInitSocket() {
-
-    print("Retry...");
+  Future<void> _retryInitSocket() async {
 
     if(_retryTimer?.isActive ?? false) return;
 
-    _socket?.sink.close();
+    await _socket?.sink.close();
     _heartbeatTimer?.cancel();
 
     _retryTimer = Timer(
@@ -106,8 +129,6 @@ class PhoenixService {
 
   void _joinToUserChannel() {
 
-    print("Присоединяемся к каналу пользователя...");
-
     final ref = DateTime.now().millisecondsSinceEpoch.toString();
 
     final joinMsg = [ref, ref, "user:$_userId", "phx_join", {}];
@@ -116,8 +137,6 @@ class PhoenixService {
   }
 
   void joinToChat(String chatId) {
-
-    print("Присоединяемся к чату...");
 
     final ref = DateTime.now().millisecondsSinceEpoch.toString();
 
@@ -128,11 +147,41 @@ class PhoenixService {
 
   }
 
-  void leaveChat(String chatId) {
+  void deleteReaction(String messageId, int reactionId) {
+
+    if(!_isJoinedToChatChannel) {
+
+      return;
+
+    }
 
     final ref = DateTime.now().millisecondsSinceEpoch.toString();
 
-    print("Выходим из чата...");
+    final msg = [_joinRef, ref, "room:$_chatId", "delete_reaction", {"message_id": messageId, "reaction_id": reactionId}];
+
+    _socket!.sink.add(jsonEncode(msg));
+
+  }
+
+  void addReaction(String messageId, String reaction) {
+
+    if(!_isJoinedToChatChannel) {
+
+      return;
+
+    }
+
+    final ref = DateTime.now().millisecondsSinceEpoch.toString();
+
+    final msg = [_joinRef, ref, "room:$_chatId", "add_reaction", {"message_id": messageId, "emoji": reaction}];
+
+    _socket!.sink.add(jsonEncode(msg));
+
+  }
+
+  void leaveChat(String chatId) {
+
+    final ref = DateTime.now().millisecondsSinceEpoch.toString();
 
     final leaveMsg = [_joinRef, ref, "room:$chatId", "phx_leave", {}];
 
@@ -144,33 +193,29 @@ class PhoenixService {
 
   }
 
-  void sendMessage(String body) {
+  void sendMessage(String body, {String? replyTo = null}) {
 
     if(!_isJoinedToChatChannel) {
-
-     print("You're not in chat");
 
       return;
 
     }
 
-    print("Отправляем сообщение: $body...");
-
     final ref = DateTime.now().millisecondsSinceEpoch.toString();
 
-    final msg = [_joinRef, ref, "room:$_chatId", "new_message", {"body": body}];
-
-    print("Полный массив: $msg");
-    print("JSON: $msg");
+    final msg = [_joinRef, ref, "room:$_chatId", "new_message", {"body": body, "reply_to": replyTo}];
 
     _socket!.sink.add(jsonEncode(msg));
-    print("Отправили сообщение");
     
   }
 
-  void _handleMessage(String message) {
+  Future<void> deleteChat(chatId) async {
 
-    print("Получили сообщение: $message");
+    await http.delete(Uri.parse("http://$apiUrl/rooms/$_userId/$chatId"));
+
+  }
+
+  void _handleMessage(String message) {
 
     try {
 
@@ -188,6 +233,7 @@ class PhoenixService {
 
             _isJoinedToChatChannel = true;
             _chatId = topic.split("room:")[1];
+            print(payload);
 
         }
 
@@ -197,13 +243,13 @@ class PhoenixService {
 
       else if(event == "new_message") {
 
+        print("Получено сообщение: ${payload}");
+
         onNewMessage?.call(payload);
 
       }
 
       else if(event == "rooms_list") {
-
-        print("Получен список комнат");
 
         onChatsList?.call(payload["rooms"]);
 
@@ -211,15 +257,11 @@ class PhoenixService {
 
       else if(event == "presence_state") {
 
-        print("Получено состояние");
-
         onPresenceState?.call(payload);
 
       }
 
       else if(event == "presence_diff") {
-
-        print("Получено состояние: $payload");
 
         onPresenceDiff?.call(payload);
 
@@ -227,18 +269,38 @@ class PhoenixService {
 
       else if(event == "typing") {
 
-        print("Кто то что то печатает...");
-
         onTyping?.call(payload);
 
       }
 
-      else if(event == "chat_updated") {
+      else if(event == "add_in_new_chat") {
+        
+        onAddInNewChat?.call(payload);
 
-        print("Чат был обновлён");
+      }
 
-        onChatUpdated?.call(payload);
+      else if(event == "last_message_updated") {
 
+        onLastMessageUpdated?.call(payload);
+
+      }
+
+      else if(event == "user_delete_chat") {
+
+        onUserDeleteChat?.call(payload);
+
+      }
+
+      else if(event == "add_reaction") {
+
+        onAddReaction?.call(Reaction.fromJson(payload));
+        
+      }
+
+      else if(event == "delete_reaction") {
+
+        onDeleteReaction?.call(payload);
+        
       }
 
     }
@@ -254,8 +316,6 @@ class PhoenixService {
   void sendTyping(bool typing) {
 
     if(!_isJoinedToChatChannel) {
-
-        print("You're not in chat");
         return;
 
     }
@@ -292,23 +352,129 @@ class PhoenixService {
 
       }
     });
-
   }
 
-  Future<bool> createGroup(String groupName, File? logo, {bool isPublic = true}) async {
+	Future<void> unlogin() async {
 
-    var request = http.MultipartRequest("POST", Uri.parse("http://10.0.2.2:4000/api/rooms"));
+		final result = await http.delete(
+			Uri.parse("http://$apiUrl/user"),
+			body: {
+				"user_id": _userId,
+			}, 
+			headers: {
+				"Authorization": "Bearer $_token"
+			}
+		);
 
-    request.fields["name"] = groupName;
-    request.fields["description"] = "";
+		if(result.statusCode == 200) {
+
+			_userId = "";
+			_userName = "";
+			_token = "";
+
+			final pref = await SharedPreferences.getInstance();
+			await pref.remove("userId");
+			await pref.remove("userName");
+			await pref.remove("token");
+
+		}
+
+	}
+
+	Future<bool> login(String login, String password) async {
+
+		final result = await http.post(Uri.parse("http://$apiUrl/user/login"), body: {
+			"login": "@$login",
+			"password": password
+		});
+
+		if(result.statusCode == 200)
+		{
+				final data = jsonDecode(result.body);
+
+				_userId = data["user_id"];
+				_userName = data["user_name"];
+				_token = data["token"];
+
+				final pref = await SharedPreferences.getInstance();
+				await pref.setString("userId", data["user_id"]);
+				await pref.setString("userName", data["user_name"]);
+				await pref.setString("token", data["token"]);
+
+				return true;
+		}
+
+		else {
+				return false;
+		}
+
+	}
+
+	Future<void> createAccount(String name, String login, String password, String aboutMe, File? avatar) async {
+
+		try {
+
+			var request = http.MultipartRequest("POST", Uri.parse("http://$apiUrl/user"));
+
+			request.fields["name"] = name;
+			request.fields["login"] = login;
+			request.fields["password"] = password;
+			request.fields["aboutMe"] = aboutMe;
+			
+			if(avatar != null) {
+				request.files.add(
+					await http.MultipartFile.fromPath("avatar", avatar.path)
+				);
+			}
+			else {
+				request.fields["avatar"] = "#${Random().nextInt(0xFFFFF + 1).toRadixString(16).padLeft(6, '0').toUpperCase()}";
+			}
+
+			var response = await request.send();
+
+			final body = await response.stream.bytesToString();
+
+    	if(response.statusCode == 200) {
+
+				final data = jsonDecode(body);
+
+				_userId = data["user_id"];
+				_userName = data["user_name"];
+				_token = data["token"];
+
+				final pref = await SharedPreferences.getInstance();
+				await pref.setString("userId", data["user_id"]);
+				await pref.setString("userName", data["user_name"]);
+				await pref.setString("token", data["token"]);
+
+			}
+
+		}
+		catch(e) {
+			throw Exception(e);
+		}
+
+	}
+
+  Future<bool> createChat(String chatName, String type, File? logo, {bool isPublic = true, String description = ""}) async {
+
+    var request = http.MultipartRequest("POST", Uri.parse("http://$apiUrl/rooms"));
+
+    request.headers["Authorization"] = "Bearer $_token";
+
+    request.fields["name"] = chatName;
+    request.fields["description"] = description;
     request.fields["user_id"] = _userId;
-    request.fields["type"] = "group";
+    request.fields["type"] = type;
     request.fields["accessability"] = isPublic ? "public" : "private";
 
     if(logo != null) {
       request.files.add(
         await http.MultipartFile.fromPath("logo", logo.path)
       );
+    }
+    else {
+      request.fields["logo"] = "#${Random().nextInt(0xFFFFF + 1).toRadixString(16).padLeft(6, '0').toUpperCase()}";
     }
 
     var response = await request.send();
@@ -320,12 +486,17 @@ class PhoenixService {
   Future<List<Message>> getMessages(String chatId) async {
 
     final response = await http.get(
-      Uri.parse("http://10.0.2.2:4000/api/messages/$_userId/$chatId")
+      Uri.parse("http://$apiUrl/messages/$_userId/$chatId"),
+      headers: {
+        "Authorization": "Bearer $_token"
+      }
     );
 
     if(response.statusCode == 200) {
 
       final List<dynamic> data = jsonDecode(response.body);
+
+      print(data);
 
       return data.map((json) => Message.fromJson(json)).toList();
 
@@ -337,25 +508,5 @@ class PhoenixService {
   
   }
 
-  Future<List<Chat>> getChats() async {
 
-    final response = await http.get(
-      Uri.parse("http://10.0.2.2:4000/api/rooms"),
-    );
-
-    if(response.statusCode == 200) {
-
-      final List<dynamic> data = jsonDecode(response.body);
-
-      print("Response: ${data}");
-
-      return data.map((json) => Chat.fromJson(json)).toList();
-
-    }
-
-    else {
-      throw Exception("Failed to load chat list");
-    }
-
-  }
 }

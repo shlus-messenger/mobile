@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:shlus/ui/screens/main_screen.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:shlus/api/api.dart';
+import 'package:shlus/ui/screens/entry_screen.dart';
+import 'package:shlus/ui/screens/home_screen.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:developer';
 
 void main() async {
@@ -19,6 +23,11 @@ void main() async {
   };
 
   await initializeDateFormatting("ru_RU", null);
+  await dotenv.load(fileName: ".env");
+
+  final service = PhoenixService();
+  await service.initData();
+
 
   runApp(const MyApp());
 }
@@ -37,9 +46,40 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.red,
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue)
       ),
+      
+      home: FutureBuilder(
+        future: _checkAuth(),
+        builder: (context, snapshot) {
+          if(snapshot.connectionState == ConnectionState.waiting) {
+            return Scaffold(
+              body: Center(child: CircularProgressIndicator())
+            );
+          }
 
-      home: const MainScreen()
+          else if(snapshot.hasData && snapshot.data == true) {
+            return const HomeScreen();
+          }
+
+          else{
+            return const EntryScreen();
+          }
+        }
+      )
     );
+
+  }
+
+  Future<bool> _checkAuth() async {
+
+    final prefs = await SharedPreferences.getInstance();
+
+    final token = prefs.get("token");
+    final userId = prefs.get("userId");
+    final userName= prefs.get("userName");
+
+    print("token: $token, userId: $userId, userName: $userName");
+
+    return token != null && userId != null && userName != null;
 
   }
 

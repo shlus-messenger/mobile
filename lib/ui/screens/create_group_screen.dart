@@ -3,8 +3,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shlus/api/api.dart';
-import 'package:shlus/ui/screens/chat_list_screen.dart';
-import 'package:shlus/ui/screens/chat_screen.dart';
 
 class CreateGroupScreen  extends StatefulWidget {
 
@@ -41,7 +39,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
         elevation: 0,
         onPressed: () async {
 
-          bool result = await _service.createGroup(_groupNameController.text, _selectedImage);
+          bool result = await _service.createChat(_groupNameController.text, "group", _selectedImage);
 
           if(result) {
             Navigator.pop(context, true);
