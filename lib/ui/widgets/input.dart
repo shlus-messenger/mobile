@@ -1,3 +1,4 @@
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter/material.dart';
 
 enum InputType {
@@ -13,6 +14,7 @@ class Input extends StatefulWidget {
   final Icon? prefixIcon;
   final InputType? type;
   final TextEditingController? controller;
+  final bool? hasError;
 
   Input({
     this.placeholder,
@@ -20,6 +22,7 @@ class Input extends StatefulWidget {
     this.subscription,
     this.type = InputType.text,
     this.controller,
+    this.hasError = false
   });
 
   @override
@@ -44,19 +47,19 @@ class _InputState extends State<Input> {
             Text(
               widget.subscription!
             ),
-          const SizedBox(height: 5),
+          SizedBox(height: 5.h),
           TextField(
             decoration: InputDecoration(
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(10.r),
                 borderSide: BorderSide(
-                  color: Colors.grey.shade400
+                  color: widget.hasError! ? Colors.red : Colors.grey.shade400
                 )
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(10.r),
                 borderSide: BorderSide(
-                  color: Colors.blue
+                  color: widget.hasError! ? Colors.red : Colors.blue
                 )
               ),
               prefixIcon: widget.prefixIcon,
@@ -73,7 +76,7 @@ class _InputState extends State<Input> {
               ,
               hintText: widget.placeholder,
               hintStyle: TextStyle(
-                fontSize: 14,
+                fontSize: 14.sp,
                 color: Colors.grey.shade500
               ),
             ),
@@ -84,5 +87,4 @@ class _InputState extends State<Input> {
       )
     ); 
   }
-
 }

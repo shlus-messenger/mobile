@@ -38,7 +38,7 @@ class _EntryScreenState extends State<EntryScreen> {
       controller: _pageController,
       physics: const NeverScrollableScrollPhysics(),
       children: [
-        HelloScreen(nextPage: _nextPage),
+        //HelloScreen(nextPage: _nextPage),
         AuthScreen(previousPage: _previousPage, nextPage: _nextPage),
         CreateAccountScreen(previousPage: _previousPage)
       ],

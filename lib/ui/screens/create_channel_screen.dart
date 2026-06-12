@@ -1,3 +1,5 @@
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -54,22 +56,22 @@ class _CreateGroupScreenState extends State<CreateChannelScreen> {
         ],
       ),
       body: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 20),
+        padding: EdgeInsets.symmetric(horizontal: 20.w),
         child: Column(
           children: [
             Row(
               children: [
                 CircleAvatar(
-                  radius: 30,
+                  radius: 30.r,
                   backgroundImage: _selectedImage != null ? FileImage(_selectedImage!) : null,
                   backgroundColor: Colors.blue,
                   child: IconButton(
-                      icon: Icon(Icons.add_a_photo, size: 25),
+                      icon: Icon(Icons.add_a_photo, size: 25.sp),
                       onPressed: _pickImage,
                       color: Colors.white,
                     )
                 ),
-                const SizedBox(width: 20),
+                SizedBox(width: 20.w),
                 Expanded(
                   child: TextField(
                     controller: _channelNameController,
@@ -80,13 +82,13 @@ class _CreateGroupScreenState extends State<CreateChannelScreen> {
                       ),
                       focusedBorder: UnderlineInputBorder(
                         borderSide: BorderSide(
-                          width: 2,
+                          width: 2.w,
                           color: Colors.blue
                         )
                       ),
                       enabledBorder: UnderlineInputBorder(
                         borderSide: BorderSide(
-                          width: 1,
+                          width: 1.w,
                           color: Colors.grey.shade300
                         )
                       ),
@@ -101,7 +103,7 @@ class _CreateGroupScreenState extends State<CreateChannelScreen> {
                 )
               ],
             ),
-            SizedBox(height: 20),
+            SizedBox(height: 20.h),
             TextField(
               controller: _channelDescriptionController,
               decoration: InputDecoration(
@@ -111,20 +113,20 @@ class _CreateGroupScreenState extends State<CreateChannelScreen> {
                 ),
                 focusedBorder: UnderlineInputBorder(
                   borderSide: BorderSide(
-                    width: 2,
+                    width: 2.w,
                     color: Colors.blue
                   )
                 ),
                 enabledBorder: UnderlineInputBorder(
                   borderSide: BorderSide(
-                    width: 1,
+                    width: 1.w,
                     color: Colors.grey.shade300
                   )
                 ),
                 focusColor: Colors.blue
               ),
             ),
-            SizedBox(height: 10),
+            SizedBox(height: 10.h),
             Row(
               children: [
                 Container(

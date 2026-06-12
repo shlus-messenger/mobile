@@ -62,6 +62,8 @@ class PhoenixService {
 
   Future<void> initSocket() async {
 
+    if(_userId == "" && _token == "" && _userName == "") return;
+
     try {
         final wsUrl = Uri.parse("ws://$apiUrl/socket/websocket/?vsn=2.0.0&user_id=$_userId&user_name=$_userName&token=$_token");
 
@@ -110,6 +112,8 @@ class PhoenixService {
   }
 
   Future<void> _retryInitSocket() async {
+
+    if(_userId == "" && _token == "" && _userName == "") return;
 
     if(_retryTimer?.isActive ?? false) return;
 
@@ -354,12 +358,12 @@ class PhoenixService {
     });
   }
 
-	Future<void> unlogin() async {
+	Future<void> logout() async {
 
 		final result = await http.delete(
 			Uri.parse("http://$apiUrl/user"),
 			body: {
-				"user_id": _userId,
+				"user_id": _userId
 			}, 
 			headers: {
 				"Authorization": "Bearer $_token"
@@ -377,36 +381,49 @@ class PhoenixService {
 			await pref.remove("userName");
 			await pref.remove("token");
 
+      await _socket?.sink.close();
+      _socket = null;
+      _retryTimer?.cancel();
+      _retryTimer = null;
+      _retryAttempts = 0;
+      _isJoinedToChatChannel = false;
+      _isJoinedToUserChannel = false;
 		}
 
 	}
 
-	Future<bool> login(String login, String password) async {
+	Future<void> login(String login, String password) async {
 
-		final result = await http.post(Uri.parse("http://$apiUrl/user/login"), body: {
-			"login": "@$login",
-			"password": password
-		});
+		try {
+      final result = await http.post(Uri.parse("http://$apiUrl/user/login"), body: {
+        "login": "@$login",
+        "password": password
+      });
 
-		if(result.statusCode == 200)
-		{
-				final data = jsonDecode(result.body);
+      if(result.statusCode == 200)
+      {
+          final data = jsonDecode(result.body);
 
-				_userId = data["user_id"];
-				_userName = data["user_name"];
-				_token = data["token"];
+          _userId = data["user_id"];
+          _userName = data["user_name"];
+          _token = data["token"];
 
-				final pref = await SharedPreferences.getInstance();
-				await pref.setString("userId", data["user_id"]);
-				await pref.setString("userName", data["user_name"]);
-				await pref.setString("token", data["token"]);
+          final pref = await SharedPreferences.getInstance();
+          await pref.setString("userId", data["user_id"]);
+          await pref.setString("userName", data["user_name"]);
+          await pref.setString("token", data["token"]);
+      }
 
-				return true;
-		}
+      else {
+        throw result.statusCode;
+      }
+    } on SocketException catch(_) {
+      rethrow;
+    }
 
-		else {
-				return false;
-		}
+    catch(e) {
+      throw Exception(e);
+    }
 
 	}
 
@@ -449,12 +466,41 @@ class PhoenixService {
 
 			}
 
+      else if(response.statusCode == 403) {
+
+        throw Exception(body);
+
+      }
+
+      else {
+        throw Exception("Internal service error");
+      }
+
 		}
 		catch(e) {
 			throw Exception(e);
 		}
 
 	}
+
+  Future<bool> isUserExist(String login) async {
+
+    try {
+      final result = await http.post(Uri.parse("http://$apiUrl/user/check_existing"), body: {
+        "login": "@$login",
+      });
+
+      return jsonDecode(result.body)["exists"];
+
+    } on SocketException catch(_) {
+      rethrow;
+    }
+
+    catch(e) {
+      throw Exception(e);
+    }
+
+  }
 
   Future<bool> createChat(String chatName, String type, File? logo, {bool isPublic = true, String description = ""}) async {
 

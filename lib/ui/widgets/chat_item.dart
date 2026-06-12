@@ -1,3 +1,4 @@
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter/material.dart';
 import 'package:shlus/models/chat.dart';
 import 'package:intl/intl.dart';
@@ -50,7 +51,7 @@ class ChatItem extends StatelessWidget {
       onLongPress: onLongPress,
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
         decoration: BoxDecoration(
           border: Border(
             bottom: BorderSide(color: Colors.grey.shade300),
@@ -70,19 +71,19 @@ class ChatItem extends StatelessWidget {
                     bottom: 0,
                     child: Container(
                       alignment: Alignment.center,
-                      width: 20,
-                      height: 20,
+                      width: 20.w,
+                      height: 20.h,
                       decoration: BoxDecoration(
                         color: Colors.green,
-                        borderRadius: BorderRadius.circular(50)
+                        borderRadius: BorderRadius.circular(50.r)
                       ),
-                      child: Icon(Icons.check, color: Colors.white, size: 20),
+                      child: Icon(Icons.check, color: Colors.white, size: 20.sp),
                     ),
                   )
                 ]
               ],
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: 12.w),
             
             Expanded(
               child: Column(
@@ -90,12 +91,12 @@ class ChatItem extends StatelessWidget {
                 children: [
                   Text(
                     chat.name,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.w500,
-                      fontSize: 20,
+                      fontSize: 20.sp,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4.h),
 
                   if(chat.lastMessage != null)
 
@@ -104,7 +105,7 @@ class ChatItem extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 14.sp,
                         color: Colors.grey.shade600,
                       ),
                     ),
@@ -117,7 +118,7 @@ class ChatItem extends StatelessWidget {
               Text(
                 _formatDate(chat.lastMessageAt!),
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: 12.sp,
                   color: Colors.grey.shade500,
                 ),
               ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shlus/api/api.dart';
 import 'package:shlus/ui/screens/entry_screen.dart';
 import 'package:shlus/ui/screens/home_screen.dart';
@@ -23,6 +24,7 @@ void main() async {
   };
 
   await initializeDateFormatting("ru_RU", null);
+  await ScreenUtil.ensureScreenSize();
   await dotenv.load(fileName: ".env");
 
   final service = PhoenixService();
@@ -39,32 +41,37 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
 
-    return MaterialApp(
-      title: "",
+    return ScreenUtilInit(
+      designSize: const Size(412, 915),
+      minTextAdapt: true,
+      splitScreenMode: true,
+      builder: (context, child) => MaterialApp(
+        title: "",
 
-      theme: ThemeData(
-        primarySwatch: Colors.red,
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue)
+        theme: ThemeData(
+          primarySwatch: Colors.red,
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue)
+        ),
+        
+        home: FutureBuilder(
+          future: _checkAuth(),
+          builder: (context, snapshot) {
+            if(snapshot.connectionState == ConnectionState.waiting) {
+              return Scaffold(
+                body: Center(child: CircularProgressIndicator())
+              );
+            }
+
+            else if(snapshot.hasData && snapshot.data == true) {
+              return const HomeScreen();
+            }
+
+            else{
+              return const EntryScreen();
+            }
+          }
+        )
       ),
-      
-      home: FutureBuilder(
-        future: _checkAuth(),
-        builder: (context, snapshot) {
-          if(snapshot.connectionState == ConnectionState.waiting) {
-            return Scaffold(
-              body: Center(child: CircularProgressIndicator())
-            );
-          }
-
-          else if(snapshot.hasData && snapshot.data == true) {
-            return const HomeScreen();
-          }
-
-          else{
-            return const EntryScreen();
-          }
-        }
-      )
     );
 
   }
@@ -76,8 +83,6 @@ class MyApp extends StatelessWidget {
     final token = prefs.get("token");
     final userId = prefs.get("userId");
     final userName= prefs.get("userName");
-
-    print("token: $token, userId: $userId, userName: $userName");
 
     return token != null && userId != null && userName != null;
 

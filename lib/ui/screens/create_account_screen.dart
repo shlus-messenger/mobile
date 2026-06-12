@@ -2,10 +2,12 @@ import 'dart:io';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shlus/api/api.dart';
 import 'package:shlus/ui/screens/chat_list_screen.dart';
+import 'package:shlus/ui/widgets/error.dart';
 import 'package:shlus/ui/widgets/input.dart';
 
 class CreateAccountScreen extends StatefulWidget {
@@ -56,7 +58,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
             this.password = password;
           });
         }),
-        AvatarAndName(previousPage: _previousPage, login: login, password: password)
+        AvatarAndName(previousPage: _previousPage, login: "@$login", password: password)
       ],
     );
   }
@@ -85,6 +87,28 @@ class _LoginAndPasswordState extends State<LoginAndPassword> {
   final TextEditingController _loginController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmedPasswordController = TextEditingController();
+  bool _arePasswordsDontMatchError = false;
+  bool _loginError = false;
+  final PhoenixService _service = PhoenixService();
+
+  @override
+  void initState() {
+
+    super.initState();
+
+    _confirmedPasswordController.addListener(() {
+      setState(() {
+        _arePasswordsDontMatchError = _confirmedPasswordController.text != "" && !(_passwordController.text == _confirmedPasswordController.text);
+      });
+    });
+
+    _loginController.addListener(() {
+      setState(() {
+        _loginError = false;
+      });
+    });
+
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -92,7 +116,7 @@ class _LoginAndPasswordState extends State<LoginAndPassword> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          iconSize: 18,
+          iconSize: 18.sp,
           style: ButtonStyle(
             
           ),
@@ -101,20 +125,20 @@ class _LoginAndPasswordState extends State<LoginAndPassword> {
         ),
       ),
       body: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 30),
+        padding: EdgeInsets.symmetric(horizontal: 30.w),
         child: Center(
           child: Column(
             children: [
               SvgPicture.asset(
                 "assets/icons/logo.svg",
-                width: 100,
-                height: 100,
+                width: 100.w,
+                height: 100.h,
                 fit: BoxFit.cover,
               ),
               Text(
                 "Создание аккаунта",
                 style: TextStyle(
-                  fontSize: 24,
+                  fontSize: 24.sp,
                   fontWeight: FontWeight.w700
                 ),
               ),
@@ -131,6 +155,7 @@ class _LoginAndPasswordState extends State<LoginAndPassword> {
                 placeholder: "Придумайте логин",
                 prefixIcon: Icon(Icons.person_outline),
                 controller: _loginController,
+                hasError: _loginError,
               ),
               const SizedBox(height: 20),
               Input(
@@ -147,33 +172,50 @@ class _LoginAndPasswordState extends State<LoginAndPassword> {
                 prefixIcon: Icon(Icons.lock_outline),
                 type: InputType.password,
                 controller: _confirmedPasswordController,
+                hasError: _arePasswordsDontMatchError,
               ),
               const SizedBox(height: 20),
               InkWell(
-                onTap: () {
-                  widget.onDataChange(_loginController.text, _passwordController.text);
-                  widget.nextPage();
+                onTap: () async {
+                  if(!_arePasswordsDontMatchError && _passwordController.text != "" && _loginController.text != "" && _confirmedPasswordController.text != "") {
+                    if(!(await _service.isUserExist(_loginController.text))) {
+                      widget.onDataChange(_loginController.text, _passwordController.text);
+                      widget.nextPage();
+                    }
+                    else {
+                      setState(() {
+                        _loginError = true;
+                      });
+                      ErrorBanner.show(context, "Логин занят");
+                    }
+                  }
+                  else if(_arePasswordsDontMatchError){
+                    ErrorBanner.show(context, "Пароли не совпадают");
+                  }
+                  else {
+                    ErrorBanner.show(context, "Пожалуйста, заполните все поля");
+                  }
                 },
                 child: Container(
                   width: double.infinity,
                   alignment: Alignment.center,
-                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                  padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 15.h),
                   decoration: BoxDecoration(
                     color: Colors.blue,
-                    borderRadius: BorderRadius.circular(10)
+                    borderRadius: BorderRadius.circular(10.r)
                   ),
                   child: Text(
                     "Далее",
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 16,
+                      fontSize: 16.sp,
                       fontWeight: FontWeight.w600)
                   )
                 )
               ),
               const SizedBox(height: 20),
               Row(
-                spacing: 10,
+                spacing: 10.w,
                 children: [
                   Expanded(
                     child: Divider(
@@ -198,7 +240,7 @@ class _LoginAndPasswordState extends State<LoginAndPassword> {
               const SizedBox(height: 20),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                spacing: 30,
+                spacing: 30.w,
                 children: [
                   ...[
                     {"icon": Icon(Icons.g_mobiledata), "title": "Google"},
@@ -239,10 +281,10 @@ class _LoginAndPasswordState extends State<LoginAndPassword> {
 
     return InkWell(
       child: Container(
-        width: 80,
-        height: 80,
+        width: 80.w,
+        height: 80.h,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(10.r),
           border: Border.all(color: Colors.grey.shade400)
         ),
         child: Column(
@@ -284,18 +326,26 @@ class _AvatarAndName extends State<AvatarAndName> {
   final TextEditingController _aboutMeController = TextEditingController();
   final PhoenixService _service = PhoenixService();
   File? _selectedImage;
+  bool _nameError = false;
 
   Future<void> _createAccount() async {
 
-    final result = await _service.createAccount(_nameController.text, widget.login, widget.password, _aboutMeController.text, _selectedImage);
+    try {
+      final result = await _service.createAccount(_nameController.text, widget.login, widget.password, _aboutMeController.text, _selectedImage);
     
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(
-        builder: (_) => ChatListScreen()
-      ),
-      (route) => false
-    );
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ChatListScreen()
+        ),
+        (route) => false
+      );
+    }
+    catch(e) {
+      if(e == "User already exists") {
+        
+      }
+    }
     
   }
 
@@ -312,12 +362,25 @@ class _AvatarAndName extends State<AvatarAndName> {
   }
 
   @override
+  void initState() {
+
+    super.initState();
+
+    _nameController.addListener(() {
+      setState(() {
+        _nameError = false;
+      });
+    });
+
+  }
+
+  @override
   Widget build(BuildContext context) {
 
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          iconSize: 18,
+          iconSize: 18.sp,
           style: ButtonStyle(
             
           ),
@@ -326,20 +389,20 @@ class _AvatarAndName extends State<AvatarAndName> {
         ),
       ),
       body: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 30),
+        padding: EdgeInsets.symmetric(horizontal: 30.w),
         child: Center(
           child: Column(
             children: [
               SvgPicture.asset(
                 "assets/icons/logo.svg",
-                width: 100,
-                height: 100,
+                width: 100.w,
+                height: 100.h,
                 fit: BoxFit.cover,
               ),
               Text(
                 "Создание аккаунта",
                 style: TextStyle(
-                  fontSize: 24,
+                  fontSize: 24.sp,
                   fontWeight: FontWeight.w700
                 ),
               ),
@@ -362,22 +425,22 @@ class _AvatarAndName extends State<AvatarAndName> {
                         child: CircleAvatar(
                           backgroundColor: Color(0xFFEAE7F2),
                           backgroundImage: _selectedImage != null ? FileImage(_selectedImage!) : null,
-                          radius: 40,
-                          child: _selectedImage == null ? Icon(Icons.person_outlined, size: 50, color: Colors.grey) : null,
+                          radius: 40.r,
+                          child: _selectedImage == null ? Icon(Icons.person_outlined, size: 50.sp, color: Colors.grey) : null,
                         ),
                       ),
                       Positioned(
-                        bottom: -5,
-                        right: -5,
+                        bottom: -5.h,
+                        right: -5.w,
                         child: Container(
                           alignment: Alignment.center,
-                          width: 25,
-                          height: 25,
+                          width: 25.w,
+                          height: 25.h,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: Colors.blue
                           ),
-                          child: Icon(Icons.photo_camera, color: Colors.white, size: 15),
+                          child: Icon(Icons.photo_camera, color: Colors.white, size: 15.sp),
                         ),
                       )
                     ],
@@ -399,6 +462,7 @@ class _AvatarAndName extends State<AvatarAndName> {
                 placeholder: "Придумайте себе имя",
                 prefixIcon: Icon(Icons.person_outline),
                 controller: _nameController,
+                hasError: _nameError,
               ),
               const SizedBox(height: 20),
               Input(
@@ -409,27 +473,37 @@ class _AvatarAndName extends State<AvatarAndName> {
               ),
               const SizedBox(height: 20),
               InkWell(
-                onTap: () async {await _createAccount();},
+                onTap: () async {
+                  if(!(_nameController.text == "")) {
+                    await _createAccount();
+                  }
+                  else {
+                    setState(() {
+                      _nameError = true;
+                    });
+                    ErrorBanner.show(context, "Введите имя");
+                  }
+                },
                 child: Container(
                   width: double.infinity,
                   alignment: Alignment.center,
-                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                  padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 15.h),
                   decoration: BoxDecoration(
                     color: const Color.from(alpha: 1, red: 0.129, green: 0.588, blue: 0.953),
-                    borderRadius: BorderRadius.circular(10)
+                    borderRadius: BorderRadius.circular(10.r)
                   ),
                   child: Text(
                     "Создать аккаунт",
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 16,
+                      fontSize: 16.sp,
                       fontWeight: FontWeight.w600)
                   )
                 )
               ),
               const SizedBox(height: 20),
               Row(
-                spacing: 10,
+                spacing: 10.w,
                 children: [
                   Expanded(
                     child: Divider(
@@ -454,7 +528,7 @@ class _AvatarAndName extends State<AvatarAndName> {
               const SizedBox(height: 20),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                spacing: 30,
+                spacing: 30.w,
                 children: [
                   ...[
                     {"icon": Icon(Icons.g_mobiledata), "title": "Google"},
@@ -495,10 +569,10 @@ class _AvatarAndName extends State<AvatarAndName> {
 
     return InkWell(
       child: Container(
-        width: 80,
-        height: 80,
+        width: 80.w,
+        height: 80.h,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(10.r),
           border: Border.all(color: Colors.grey.shade400)
         ),
         child: Column(

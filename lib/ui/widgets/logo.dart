@@ -1,3 +1,4 @@
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter/material.dart';
 
 class Logo extends StatelessWidget {
@@ -16,7 +17,7 @@ class Logo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CircleAvatar(
-      radius: radius,
+      radius: radius.r,
       backgroundImage: logo.contains("http") ? NetworkImage(
         logo
       ) : null,
@@ -26,7 +27,7 @@ class Logo extends StatelessWidget {
           name![0],
           style: TextStyle(
             color: Colors.white,
-            fontSize: 18,
+            fontSize: 18.sp,
             fontWeight: FontWeight.w400,
             height: 1
           ),
@@ -35,5 +36,4 @@ class Logo extends StatelessWidget {
         : null,
     );
   }
-
 }

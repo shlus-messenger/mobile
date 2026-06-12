@@ -1,3 +1,4 @@
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -27,15 +28,15 @@ class MessageItem extends StatelessWidget {
   Widget build(BuildContext context) {
     
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 20),
+      padding: EdgeInsets.symmetric(horizontal: 20.w),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
         children: [
           if(!isMe) _buildAvatar(),
-          if(!isMe) const SizedBox(width: 10),
+          if(!isMe) SizedBox(width: 10.w),
           _buildMessageBubble(context),
-          if(isMe) const SizedBox(width: 10),
+          if(isMe) SizedBox(width: 10.w),
           if(isMe) _buildAvatar(),
         ]
       )
@@ -47,9 +48,9 @@ class MessageItem extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: isMe ? Color.fromARGB(255, 192, 232, 199) : Colors.white,
-        borderRadius: BorderRadius.circular(10)
+        borderRadius: BorderRadius.circular(10.r)
       ),
-      padding: const EdgeInsets.only(right: 10, top: 10, bottom: 10, left: 10),
+      padding: EdgeInsets.only(right: 10.w, top: 10.h, bottom: 10.h, left: 10.w),
       child: IntrinsicWidth(
             child: 
             Column(
@@ -79,7 +80,7 @@ class MessageItem extends StatelessWidget {
                       softWrap: true,
                     ),
 
-                    const SizedBox(height: 4),
+                    SizedBox(height: 4.h),
 
                     
                     Row(
@@ -88,17 +89,17 @@ class MessageItem extends StatelessWidget {
                       children: [
                         if(reactions != [])
                           Wrap(
-                            spacing: 4,
-                            runSpacing: 4,
+                            spacing: 4.w,
+                            runSpacing: 4.h,
                             children: reactions!.map((reaction) => GestureDetector(
                               onTap: () {
                                 onEmojiTap!(reaction);
                               },
                               child: Container(
-                              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
                               alignment: Alignment.centerRight,
                               decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(20),
+                                borderRadius: BorderRadius.circular(20.r),
                                 color: Colors.blue
                               ),
                               child: Row(
@@ -111,11 +112,11 @@ class MessageItem extends StatelessWidget {
                                     ),
                                   ),
                                   Transform.translate(
-                                    offset: const Offset(5, 0),
+                                    offset: Offset(5.w, 0),
                                     child: Logo(
                                       logo: "http://10.0.2.2:8333/chats/f88ae209-1fa9-4eb7-8ecd-831bba611f13/logo/logo.png",
                                       name: "Mark",
-                                      radius: 10,
+                                      radius: 10.r,
                                       
                                     ),
                                   )
@@ -124,11 +125,11 @@ class MessageItem extends StatelessWidget {
                             )),
                             ).toList()
                           ),
-                        const SizedBox(width: 20),
+                        SizedBox(width: 20.w),
                         Text(
                           "${message.date.hour}:${message.date.minute.toString().padLeft(2, '0')}",
-                          style: const TextStyle(
-                            fontSize: 11,
+                          style: TextStyle(
+                            fontSize: 11.sp,
                             color: Colors.grey,
                           ),
                         ),
@@ -156,13 +157,13 @@ class MessageItem extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.symmetric(horizontal: 5),
+      padding: EdgeInsets.symmetric(horizontal: 5.w),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(5),
+        borderRadius: BorderRadius.circular(5.r),
         border: Border(
           left: BorderSide(
             color: Color.fromARGB(255, 129, 176, 138),
-            width: 4
+            width: 4.w
           )
         ),
         color: Color.fromARGB(255, 186, 217, 192),

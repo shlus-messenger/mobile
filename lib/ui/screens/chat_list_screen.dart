@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shlus/api/api.dart';
 import 'package:shlus/models/chat.dart';
@@ -59,6 +60,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
   void initState() {
 
     super.initState();
+
     _service.onChatsList = (payload) {
 
       if(!mounted) return;
@@ -132,6 +134,14 @@ class _ChatListScreenState extends State<ChatListScreen> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    print("Ширина: ${MediaQuery.of(context).size.width}");
+    print("Высота: ${MediaQuery.of(context).size.height}");
+  }
+
+  @override
   Widget build(BuildContext context) {
 
     return Scaffold(
@@ -167,7 +177,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                   break;
                 
                 case "exit":
-                  _service.unlogin();
+                  _service.logout();
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -236,14 +246,14 @@ class _ChatListScreenState extends State<ChatListScreen> {
                 context: context,
                 builder: (context) {
                   return AlertDialog(
-                    actionsPadding: EdgeInsets.only(bottom: 5, right: 10),
-                    contentPadding: EdgeInsets.only(left: 20, right: 20, top: 20),
+                    actionsPadding: EdgeInsets.only(bottom: 5.h, right: 10.w),
+                    contentPadding: EdgeInsets.only(left: 20.w, right: 20.w, top: 20.h),
                     actions: [
                       TextButton(
                         child: Text(
                           "Отмена",
                           style: TextStyle(
-                            fontSize: 15,
+                            fontSize: 15.sp,
                             color: Colors.blue,
                             fontWeight: FontWeight.w600
                           ),
@@ -256,7 +266,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                         child: Text(
                           _selectedChats.length > 1 ? "Удалить" : ["group", "dialog"].contains(_selectedChats[0].type) ? "Удалить чат" : "Покинуть канал",
                           style: TextStyle(
-                            fontSize: 15,
+                            fontSize: 15.sp,
                             color: Colors.red,
                             fontWeight: FontWeight.w600
                           ),
@@ -283,26 +293,26 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                 logo: _selectedChats[0].logo,
                                 name: _selectedChats[0].name
                               ),
-                              SizedBox(width: 10),
+                              SizedBox(width: 10.w),
                             ],
                             Text(
                               _selectedChats.length > 1 ? "Удалить ${_selectedChats.length} чата" : _selectedChats[0].type == "group" ? "Покинуть группу" : _selectedChats[0].type == "channel" ? "Покинуть канал" : "Удалить чат",
                               style: TextStyle(
-                                fontSize: 20,
+                                fontSize: 20.sp,
                                 fontWeight: FontWeight.w500
                               ),
                               softWrap: true,
                             )
                           ],
                         ),
-                        SizedBox(height: 10),
+                        SizedBox(height: 10.h),
                         Text.rich(
                           TextSpan(
                             children: [
                               TextSpan(
                                 text: _selectedChats.length > 1 ? "Вы точно хотите удалить выбранные чаты?" : _selectedChats[0].type == "group" ? "Вы точно хотите удалить и покинуть группу " : _selectedChats[0].type == "channel" ? "Вы точно хотите покинуть " : "Вы точно хотите удалить чат с ",
                                 style: TextStyle(
-                                  fontSize: 15
+                                  fontSize: 15.sp
                                 ),
                               ),
                               if(_selectedChats.length == 1) ...[
@@ -310,7 +320,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                   text: _selectedChats[0].name,
                                   style: TextStyle(
                                     fontWeight: FontWeight.w700,
-                                    fontSize: 15
+                                    fontSize: 15.sp
                                   )
                                 ),
                                 const TextSpan(

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shlus/models/chat.dart';
 import 'package:shlus/api/api.dart';
@@ -222,7 +223,7 @@ class _ChatScreenState extends State<ChatScreen> {
 								logo: widget.chat.logo,
 								name: widget.chat.name
 							),
-              const SizedBox(width: 10),
+              SizedBox(width: 10.w),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -233,7 +234,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   Text(
                     _typingUser!.containsValue(true) ? "${_typingUser.entries.where((entry) => entry.value).map((entry) => entry.key).firstOrNull} печатает..." : "${widget.chat.members.length} участника ${_onlineUsers.length != 0 ? ", ${_onlineUsers.length} онлайн" : ""}",
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 12.sp,
                       color: _typingUser.containsValue(true) ? Colors.blue : Colors.grey.shade500
                     ),
                   )
@@ -251,7 +252,7 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
       body: Container(
         color: Colors.grey.shade300,
-        padding: EdgeInsets.only(top: 20),
+        padding: EdgeInsets.only(top: 20.h),
         child: Column(
           children: [
             Expanded(
@@ -284,7 +285,7 @@ class _ChatScreenState extends State<ChatScreen> {
                               },
 															onHorizontalDragUpdate: (d) {
 																setState(() {
-																  final newOffset = (dragOffset + d.delta.dx).clamp(-80, 0);
+																  final newOffset = (dragOffset + d.delta.dx).clamp(-80.w, 0);
                                   _dragOffsets[index] = newOffset.toDouble();
 																});
 															},
@@ -303,7 +304,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                 }),
 															)
 														),
-                            const SizedBox(height: 20)
+                            SizedBox(height: 20.h)
                           ],
                         )
                       );
@@ -311,10 +312,10 @@ class _ChatScreenState extends State<ChatScreen> {
                   )
             ),
             Padding(
-              padding: const EdgeInsets.all(8),
+              padding: EdgeInsets.all(8.r),
               child: Container(
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(25),
+                  borderRadius: BorderRadius.circular(25.r),
                   color: Colors.white
                 ),
                 child: Column(
@@ -323,10 +324,10 @@ class _ChatScreenState extends State<ChatScreen> {
                     if(_replyTo != null)
                       Container(
                         alignment: Alignment.center,
-                        height: 50,
+                        height: 50.h,
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.vertical(top: Radius.circular(20))
+                          borderRadius: BorderRadius.vertical(top: Radius.circular(20.r))
                         ),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
@@ -377,13 +378,13 @@ class _ChatScreenState extends State<ChatScreen> {
                             controller: _textContoller,
                             decoration: InputDecoration(
                               contentPadding: EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 10
+                                horizontal: 10.w,
+                                vertical: 10.h
                               ),
                               isDense: true,
                               hintText: "Сообщение: ",
                               hintStyle: TextStyle(
-                                fontSize: 14
+                                fontSize: 14.sp
                               ),
                               border: OutlineInputBorder(
                                 borderSide: BorderSide.none

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shlus/ui/screens/create_channel_screen.dart';
 import 'package:shlus/ui/screens/create_group_screen.dart';
 import 'package:shlus/ui/widgets/input_component.dart';
@@ -29,7 +30,7 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
 			),
 			builder: (BuildContext context) {
 				return Container(
-					padding: EdgeInsets.all(20),
+					padding: EdgeInsets.all(20.w),
 					child: Column(
 						mainAxisAlignment: MainAxisAlignment.start,
 						mainAxisSize: MainAxisSize.min,
@@ -65,16 +66,16 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
 								},
 								child: Container(
 									alignment: Alignment.center,
-									padding: EdgeInsets.symmetric(vertical: 10),
+									padding: EdgeInsets.symmetric(vertical: 10.h),
 									decoration: BoxDecoration(
-										borderRadius: BorderRadius.circular(5),
+										borderRadius: BorderRadius.circular(5.r),
 										color: Colors.blue,
 									),
 									child: Text(
 										"Создать контакт",
 										style: TextStyle(
 											color: Colors.white,
-											fontSize: 16,
+											fontSize: 16.sp,
 											fontWeight: FontWeight.w500
 										)
 									),
@@ -138,7 +139,7 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
         child: Column(
           children: [
             Container(
-              height: 40,
+              height: 40.h,
               child: TextField(
                 textAlignVertical: TextAlignVertical.center,
                 decoration: InputDecoration(
@@ -147,10 +148,10 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
                   prefixIcon: Icon(Icons.search),
                   hintText: "Поиск контактов",
                   hintStyle: TextStyle(
-                    fontSize: 14
+                    fontSize: 14.sp
                   ),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(10.r),
                     borderSide: BorderSide.none
                   )
 
@@ -162,7 +163,7 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(10)
+                borderRadius: BorderRadius.circular(10.r)
               ),
               child: Column(
                 children: [
@@ -183,7 +184,7 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
                     child: Row(
                       children: [
                         Icon(Icons.group),
-                        const SizedBox(width: 10),
+                        SizedBox(width: 10.w),
                         Text(
                           "Создать группу"
                         )
@@ -208,7 +209,7 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
                     child: Row(
                       children: [
                         Icon(Icons.speaker),
-                        const SizedBox(width: 10),
+                        SizedBox(width: 10.w),
                         Text(
                           "Создать канал"
                         )
@@ -220,7 +221,7 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
             ),
             const SizedBox(height: 20),
             Container(
-							padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+							padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
 							decoration: BoxDecoration(
 									color: Colors.white,
 							),

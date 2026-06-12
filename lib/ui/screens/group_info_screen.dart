@@ -1,3 +1,4 @@
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter/material.dart';
 import 'package:shlus/models/chat.dart';
 import 'package:shlus/api/api.dart';
@@ -43,7 +44,7 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
         ],
       ),
       body: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 20),
+        padding: EdgeInsets.symmetric(horizontal: 20.w),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -54,13 +55,13 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
                   children: [
                     CircleAvatar(
                       backgroundImage: NetworkImage(widget.chat.logo),
-                      radius: 50,
+                      radius: 50.r,
                     ),
-                    SizedBox(height: 10),
+                    SizedBox(height: 10.h),
                     Text(
                       widget.chat.name,
                       style: TextStyle(
-                        fontSize: 24
+                        fontSize: 24.sp
                       ),
                     ),
                     Text(
@@ -73,18 +74,18 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
                 )
               ],
             ),
-            SizedBox(height: 20),
+            SizedBox(height: 20.h),
             Row(
-              spacing: 10,
+              spacing: 10.w,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
                   child: InkWell(
                     child: Container(
-                      height: 60,
+                      height: 60.h,
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(15)
+                        borderRadius: BorderRadius.circular(15.r)
                       ),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -101,10 +102,10 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
                 Expanded(
                   child: InkWell(
                     child: Container(
-                      height: 60,
+                      height: 60.h,
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(15)
+                        borderRadius: BorderRadius.circular(15.r)
                       ),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -121,10 +122,10 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
                 Expanded(
                   child: InkWell(
                     child: Container(
-                      height: 60,
+                      height: 60.h,
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(15)
+                        borderRadius: BorderRadius.circular(15.r)
                       ),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,

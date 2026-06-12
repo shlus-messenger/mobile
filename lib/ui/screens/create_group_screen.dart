@@ -1,3 +1,5 @@
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -58,17 +60,17 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
         child: Column(
           children: [
             Container(
-              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(10)
+                borderRadius: BorderRadius.circular(10.r)
               ),
               width: MediaQuery.of(context).size.width * 0.9,
               height: MediaQuery.of(context).size.width * 0.25,
               child: Row(
                 children: [
                   CircleAvatar(
-                    radius: 25,
+                    radius: 25.r,
                     backgroundImage: _selectedImage != null ? FileImage(_selectedImage!) : null,
                     backgroundColor: Colors.blue,
                     child: IconButton(
@@ -77,7 +79,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                         color: Colors.white,
                       )
                   ),
-                  const SizedBox(width: 20),
+                  SizedBox(width: 20.w),
                   Expanded(
                     child: TextField(
                       controller: _groupNameController,
@@ -88,7 +90,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                         ),
                         focusedBorder: UnderlineInputBorder(
                           borderSide: BorderSide(
-                            width: 2,
+                            width: 2.w,
                             color: Colors.blue
                           )
                         ),
@@ -108,7 +110,5 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
         ),
       )
     );
-
   }
-
 }
